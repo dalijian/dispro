@@ -41,63 +41,77 @@ public class SchedulerManager {
 
     /**
      * 开始定时任务
+     *
      * @param jobName
      * @param jobGroup
      * @throws SchedulerException
      */
-    public void startJob(String cron,String jobName,String jobGroup,String describe, Class<? extends Job> jobClass) throws SchedulerException
-    {
+    public void startJob(String cron, String jobName, String jobGroup, String describe, Class<? extends Job> jobClass) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        if(jobListener ==null){
-            jobListener =new QuartzJobListener();
+        if (jobListener == null) {
+            jobListener = new QuartzJobListener();
             scheduler.getListenerManager().addJobListener(jobListener);
         }
-        JobKey jobKey=new JobKey(jobName,jobGroup);
-        if(!scheduler.checkExists(jobKey))
-        {
-            scheduleJob(cron,scheduler,jobName,jobGroup,describe, jobClass);
+        JobKey jobKey = new JobKey(jobName, jobGroup);
+        if (!scheduler.checkExists(jobKey)) {
+            scheduleJob(cron, scheduler, jobName, jobGroup, describe, jobClass);
+        }else{
+            List<? extends Trigger> trigger = scheduler.getTriggersOfJob(new JobKey(jobName, jobGroup));
 
+//           创建 job 时  设置 job 与 trigger 是  1对1
+            String triggerName = trigger.get(0).getKey().getName();
+            String triggerGroup = trigger.get(0).getKey().getGroup();
+            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron).withMisfireHandlingInstructionFireAndProceed();
+            CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
+                    .withSchedule(scheduleBuilder)
+                    .build();
+            scheduler.rescheduleJob(new TriggerKey(triggerName, triggerGroup),cronTrigger);
         }
+
     }
 
     /**
      * 移除定时任务
+     *
      * @param jobName
      * @param jobGroup
      * @throws SchedulerException
      */
-    public void deleteJob(String jobName,String jobGroup) throws SchedulerException
-    {
+    public void deleteJob(String jobName, String jobGroup) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        JobKey jobKey=new JobKey(jobName,jobGroup);
+        JobKey jobKey = new JobKey(jobName, jobGroup);
         scheduler.deleteJob(jobKey);
     }
+
     /**
      * 暂停定时任务
+     *
      * @param jobName
      * @param jobGroup
      * @throws SchedulerException
      */
-    public void pauseJob(String jobName,String jobGroup) throws SchedulerException
-    {
+    public void pauseJob(String jobName, String jobGroup) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        JobKey jobKey=new JobKey(jobName,jobGroup);
+        JobKey jobKey = new JobKey(jobName, jobGroup);
         scheduler.pauseJob(jobKey);
     }
+
     /**
      * 恢复定时任务
+     *
      * @param jobName
      * @param jobGroup
      * @throws SchedulerException
      */
-    public void resumeJob(String jobName,String jobGroup) throws SchedulerException
-    {
+    public void resumeJob(String jobName, String jobGroup) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        JobKey jobKey=new JobKey(jobName,jobGroup);
+        JobKey jobKey = new JobKey(jobName, jobGroup);
         scheduler.resumeJob(jobKey);
     }
+
     /**
      * 清空所有当前scheduler对象下的定时任务【目前只有全局一个scheduler对象】
+     *
      * @throws SchedulerException
      */
 
@@ -105,21 +119,22 @@ public class SchedulerManager {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         scheduler.clear();
     }
+
     /**
      * 查看所有当前scheduler对象下的定时任务【目前只有全局一个scheduler对象】
-     * @throws SchedulerException
-     * @return
+     *
      * @param jobName
      * @param pageNo
      * @param pageSize
+     * @return
+     * @throws SchedulerException
      */
 
     public Map<String, Object> findAll(String jobName, String pageNo, String pageSize) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        Set<JobKey> list=null;
+        Set<JobKey> list = null;
 
-            list = scheduler.getJobKeys(GroupMatcher.anyGroup());
-
+        list = scheduler.getJobKeys(GroupMatcher.anyGroup());
 
 
         List<Map<String, String>> keyList = list.stream().map(x -> createMap(x)).collect(Collectors.toList());
@@ -130,15 +145,15 @@ public class SchedulerManager {
         List<Map<String, String>> result = keyList.stream().
                 skip((Long.parseLong(pageNo) - 1) * Integer.parseInt(pageSize)).limit(Long.parseLong(pageSize)).collect(Collectors.toList());
 
-        Map<String,Object> modelMap = new HashMap<>();
+        Map<String, Object> modelMap = new HashMap<>();
         modelMap.put("content", result);
         modelMap.put("total", keyList.size());
         return modelMap;
     }
 
-    private Map<String,String> createMap(JobKey x) {
-        
-        Map<String,String> keyMap = new ConcurrentHashMap<>();
+    private Map<String, String> createMap(JobKey x) {
+
+        Map<String, String> keyMap = new ConcurrentHashMap<>();
         keyMap.put("jobName", x.getName());
         keyMap.put("jobGroup", x.getGroup());
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
@@ -191,6 +206,7 @@ public class SchedulerManager {
      * 动态创建Job
      * 此处的任务可以配置可以放到properties或者是放到数据库中
      * Trigger:name和group 目前和job的name、group一致，之后可以扩展归类
+     *
      * @param scheduler
      * @throws SchedulerException
      */
@@ -212,7 +228,7 @@ public class SchedulerManager {
         CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
                 .withSchedule(scheduleBuilder)
                 .build();
-        scheduler.scheduleJob(jobDetail,cronTrigger);
+        scheduler.scheduleJob(jobDetail, cronTrigger);
     }
 
 }
