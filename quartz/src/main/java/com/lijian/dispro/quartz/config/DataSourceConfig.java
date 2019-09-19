@@ -14,7 +14,8 @@ import javax.annotation.Resource;
 public class DataSourceConfig {
 
 
-
+	@Resource
+	private DataSourceParams dataSourceParams;
 	@Resource
 	private DisproDatabase disproDatabase;
 
@@ -44,19 +45,20 @@ public class DataSourceConfig {
 
 
 
-//	private DataSource setConnection(DataSource dataSource) {
-//		dataSource.setMaxIdle(dataSourceParams.getMaxIdle());
-//		dataSource.setMaxWait(dataSourceParams.getMaxWait());
-//		dataSource.setMinIdle(dataSourceParams.getMinIdle());
-//		dataSource.setInitialSize(dataSourceParams.getInitialSize());
-//		dataSource.setValidationQuery(dataSourceParams.getValidationQuery());
-//		dataSource.setTestOnBorrow(dataSourceParams.isTestOnBorrow());
-//		dataSource.setTestWhileIdle(dataSourceParams.isTestWhileIdle());
-//		dataSource.setTestOnConnect(dataSourceParams.isTestOnConnect());
-//		dataSource.setTimeBetweenEvictionRunsMillis(dataSourceParams.getTimeBetweenEvictionRunsMillis());
-//		dataSource.setMinEvictableIdleTimeMillis(dataSourceParams.getMinEvictableIdleTimeMillis());
-//		return dataSource;
-//	}
 
+private DataSource setConnection(DataSource dataSource) {
+	dataSource.setMaxIdle(dataSourceParams.getMaxIdle());
+	dataSource.setMaxWait(dataSourceParams.getMaxWait());
+	dataSource.setMinIdle(dataSourceParams.getMinIdle());
+	dataSource.setInitialSize(dataSourceParams.getInitialSize());
+	dataSource.setValidationQuery(dataSourceParams.getValidationQuery());
+	dataSource.setTestOnBorrow(dataSourceParams.isTestOnBorrow());
+	dataSource.setTestWhileIdle(dataSourceParams.isTestWhileIdle());
+	dataSource.setTestOnConnect(dataSourceParams.isTestOnConnect());
+	dataSource.setTimeBetweenEvictionRunsMillis(dataSourceParams.getTimeBetweenEvictionRunsMillis());
+	dataSource.setMinEvictableIdleTimeMillis(dataSourceParams.getMinEvictableIdleTimeMillis());
+
+	return dataSource;
+}
 
 }

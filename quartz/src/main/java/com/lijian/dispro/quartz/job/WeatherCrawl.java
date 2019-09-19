@@ -11,10 +11,15 @@ import org.quartz.JobExecutionException;
 import org.quartz.PersistJobDataAfterExecution;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
@@ -22,6 +27,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +35,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+/***
+ * @DisallowConcurrentExectution 不支持 并发
+ */
 @DisallowConcurrentExecution
 @PersistJobDataAfterExecution
 @Component
@@ -52,24 +61,22 @@ public class WeatherCrawl extends BaseJob implements Job {
         List<Map<String, String>> modelList = new ArrayList<>();
 
         areaName2WeatherUrl.forEach((k, v) -> {
-
             try {
                 TimeUnit.MILLISECONDS.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
             Map<String, String> result = getWeatherInfo(v);
-            modelList.add(result);
-
+            if (result != null) {
+                modelList.add(result);
+            }
         });
-
-
         saveToDatabase(context, modelList);
     }
-
     private void saveToDatabase(JobExecutionContext context, List<Map<String, String>> modelList) {
-
+        if (modelList.isEmpty()) {
+            return;
+        }
         String insertSql = "insert into " + tableName + "("
                 + modelList.get(0).keySet().stream().collect(Collectors.joining(",")) + ")" + "values" + "(";
         for (int i = 0; i < modelList.get(0).keySet().size(); i++) {
@@ -89,41 +96,46 @@ public class WeatherCrawl extends BaseJob implements Job {
         log.info("url:{}", url + weatherCode + ".html");
         String result = getWeather(url + weatherCode + ".html");
         try {
+            if (StringUtils.isEmpty(result)) {
+                return null;
+            }
             String utf8Result = new String(result.getBytes("ISO-8859-1"), Charset.forName("utf-8"));
             log.info(utf8Result);
             Map<String, Map<String, String>> resultMap = mapper.readValue(utf8Result, Map.class);
-
             Map<String, String> wetherinfoMap = resultMap.get("weatherinfo");
-
             return wetherinfoMap;
-//            String city = resultMap.get("weatherinfo").get("SD");
-//            String cityId = resultMap.get("weatherinfo").get("SD");
-//            String temp = resultMap.get("weatherinfo").get("SD");
-//            String wd = resultMap.get("weatherinfo").get("SD");
-//            String ws = resultMap.get("weatherinfo").get("SD");
-//            String cd = resultMap.get("weatherinfo").get("SD");
-//            String ap = resultMap.get("weatherinfo").get("SD");
-//            String njg = resultMap.get("weatherinfo").get("SD");
-//            String wse = resultMap.get("weatherinfo").get("SD");
-//            String time = resultMap.get("weatherinfo").get("WSE");
-//            String sm = resultMap.get("weatherinfo").get("WSE");
-//            String isRadar = resultMap.get("weatherinfo").get("WSE");
-//            String radar = resultMap.get("weatherinfo").get("WSE");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            log.error(e.getLocalizedMessage());
         } catch (JsonParseException e) {
             e.printStackTrace();
+            log.error("weatherCode  对应 url 访问失败，weatherCode:{}", weatherCode);
+            log.error(e.getLocalizedMessage());
         } catch (JsonMappingException e) {
             e.printStackTrace();
+            log.error(e.getLocalizedMessage());
         } catch (IOException e) {
             e.printStackTrace();
+            log.error(e.getLocalizedMessage());
+        } catch (Exception e) {
+            log.error(e.getLocalizedMessage());
+
         }
         return null;
 
     }
 
     public String getWeather(String url) {
-        RestTemplate restTemplate = new RestTemplate();
+
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        //60s 设置超时
+        requestFactory.setConnectTimeout(60*1000);
+        requestFactory.setReadTimeout(60*1000);
+
+        RestTemplate restTemplate = new RestTemplateBuilder().setConnectTimeout(Duration.ofSeconds(60L)).setReadTimeout(Duration.ofSeconds(60L)).build();
+
+//        RestTemplate restTemplate = new RestTemplate(requestFactory);
+
         HttpHeaders headers = new HttpHeaders();
 //    List<String> cookies=new ArrayList<>();
 //        cookies.add("jeesite.session.id="+this.sessionValue);
@@ -131,12 +143,25 @@ public class WeatherCrawl extends BaseJob implements Job {
         MediaType type = MediaType.parseMediaType("application/json; charset=UTF-8");
         headers.setContentType(type);
         headers.add("User-Agent", " Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36");
+//        headers.add("http.protocol.handle-redirects", "false");// 默认不让重定向
 //        headers.put(HttpHeaders.COOKIE,cookies);
-        HttpEntity request = new HttpEntity(null, headers);
+        HttpEntity httpEntity = new HttpEntity(null, headers);
 //        MediaType type = MediaType.parseMediaType("application/x-www-form-urlencoded; charset=UTF-8");
         headers.setContentType(type);
-        String msg = restTemplate.getForObject(url, String.class, String.class);
-        return msg;
+        ResponseEntity<String> responseEntity = null;
+
+        try {
+            responseEntity = restTemplate.exchange(url, HttpMethod.GET, httpEntity, String.class);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error(e.getLocalizedMessage());
+        }
+        int responseCode = responseEntity.getStatusCodeValue();
+        if (responseCode == 200) {
+            return responseEntity.getBody();
+        } else {
+            log.error("url:{},responseCode:{}", url, responseCode);
+        }
+        return null;
     }
 
     public static JavaType getCollectionType(Class<?> collectionClass, Class<?>... elementClasses) {

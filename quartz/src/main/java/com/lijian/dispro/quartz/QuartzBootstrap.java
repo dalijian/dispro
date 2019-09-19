@@ -1,6 +1,5 @@
 package com.lijian.dispro.quartz;
 
-import com.lijian.dispro.quartz.job.JobTest;
 import com.lijian.dispro.quartz.job.WeatherCrawl;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
