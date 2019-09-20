@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -61,7 +62,8 @@ public class SchedulerManager {
 //           创建 job 时  设置 job 与 trigger 是  1对1
             String triggerName = trigger.get(0).getKey().getName();
             String triggerGroup = trigger.get(0).getKey().getGroup();
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron).withMisfireHandlingInstructionFireAndProceed();
+//            设置时区 Asia/Shanghai
+            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(cron).inTimeZone(TimeZone.getTimeZone("Asia/Shanghai")).withMisfireHandlingInstructionFireAndProceed();
             CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
                     .withSchedule(scheduleBuilder)
                     .build();
