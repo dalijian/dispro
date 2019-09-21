@@ -93,7 +93,7 @@ public class SchedulerConfig {
     @Bean
     public Properties quartzProperties() throws IOException {
         PropertiesFactoryBean propertiesFactoryBean = new PropertiesFactoryBean();
-        Resource resource = new ClassPathResource("application.properties");
+        Resource resource = new ClassPathResource("quartz_druid.properties");
         propertiesFactoryBean.setLocation(resource);
 
         propertiesFactoryBean.afterPropertiesSet();

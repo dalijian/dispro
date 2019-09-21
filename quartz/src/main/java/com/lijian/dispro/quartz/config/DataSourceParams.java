@@ -5,12 +5,13 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
-@ConfigurationProperties(prefix = "datasource")
+@ConfigurationProperties(prefix = "spring.datasource")
 public class DataSourceParams {
 
 	private int timeBetweenEvictionRunsMillis;// 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，如果小于等于0，不会启动检查线程，单位是毫秒
 	private int minEvictableIdleTimeMillis;// 连接在池中保持空闲而不被空闲连接回收器线程
-											// ，（如果有）回收的最小时间值，单位毫秒
+	private int maxActive;
+
 	private String validationQuery;
 	private boolean testOnBorrow;// 是否在从池中取出连接前进行检验，如果检验失败，则从池中去除连接并尝试取出另一个.默认为false
 	private boolean testWhileIdle;// 空闲时是否进行验证，检查对象是否有效，默认为false
@@ -19,6 +20,14 @@ public class DataSourceParams {
 	private int maxWait;// 最大建立连接等待时间。如果超过此时间将接到异常。设为-1表示 无限制。单位毫秒
 	private int minIdle;// 最小空闲连接数
 	private int initialSize;// 初始化连接数量
+
+	public int getMaxActive() {
+		return maxActive;
+	}
+
+	public void setMaxActive(int maxActive) {
+		this.maxActive = maxActive;
+	}
 
 	public int getTimeBetweenEvictionRunsMillis() {
 		return timeBetweenEvictionRunsMillis;

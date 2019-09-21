@@ -79,6 +79,11 @@
 		</filter>
 	</appender>
 <!--	additivity=false 不继承父类设置-->
+	<!--<logger name="org" level="${log.level}" additivity="false">-->
+		<!--<appender-ref ref="debugAppender"/>-->
+		<!--<appender-ref ref="infoAppender"/>-->
+		<!--<appender-ref ref="errorAppender"/>-->
+	<!--</logger>-->
 	<logger name="com.lijian.dispro" level="${log.level}" additivity="false">
 		<appender-ref ref="debugAppender"/>
 		<appender-ref ref="infoAppender"/>
