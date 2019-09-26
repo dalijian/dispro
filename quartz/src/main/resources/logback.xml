@@ -90,9 +90,9 @@
 		<appender-ref ref="errorAppender"/>
 	</logger>
 
-	<root level="INFO">
-		<appender-ref ref="consoleAppender"/>
-	</root>
+	<!--<root level="INFO">-->
+		<!--<appender-ref ref="consoleAppender"/>-->
+	<!--</root>-->
 	<logger name="org.springframework.transaction" level="ERROR"/>
 	<logger name="org.springframework.jms" level="DEBUG"/>
 	<logger name="org.springframework.jdbc" level="ERROR"/>
@@ -108,4 +108,47 @@
 <!--	<logger name="com.lijian.dispro" level="DEBUG">-->
 <!--	-->
 <!--	</logger>-->
+
+
+	<appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>%message %n</pattern>
+			<charset>utf8</charset>
+		</encoder>
+		<topic>rmcloud-gateway-audit-log</topic>
+		<keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy"/>
+		<deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+		　　　　 <!--注意此处应该是spring boot中的kafka配置属性-->
+		<producerConfig>bootstrap.servers=127.0.0.1:9092</producerConfig>
+		<producerConfig>client.id=logbackAppender</producerConfig>
+		<producerConfig>key.serializer=org.apache.kafka.common.serialization.IntegerSerializer</producerConfig>
+		<producerConfig>value.serializer=org.apache.kafka.common.serialization.StringSerializer</producerConfig>
+		　　　　 <producerConfig>retries=1</producerConfig>
+		　　　　<producerConfig>batch-size=16384</producerConfig>
+		　　　　<producerConfig>buffer-memory=33554432</producerConfig>
+		　　　　<producerConfig>properties.max.request.size==2097152</producerConfig>
+	</appender>
+	<root level="INFO">
+		<appender-ref ref="kafkaAppender"/>
+		<appender-ref ref="consoleAppender"/>
+	</root>
+	<property name="kafkaServers" value="127.0.0.1:9092"/>
+	<appender name="kafkaRmcloudAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+		<filter class="com.lijian.dispro.quartz.kafka.LogKafkaFilter"/>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>%message %n</pattern>
+			<charset>utf8</charset>
+		</encoder>
+		<topic>rmcloud-gateway-audit-log</topic>
+		<keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy"/>
+		<deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
+		<producerConfig>bootstrap.servers=${kafkaServers}</producerConfig>
+	</appender>
+	<logger name="com.lijian.dispro">
+
+		<appender-ref ref="kafkaRmcloudAppender"/>
+
+
+	</logger>
 </configuration>
