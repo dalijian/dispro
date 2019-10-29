@@ -84,18 +84,14 @@
 		<!--<appender-ref ref="infoAppender"/>-->
 		<!--<appender-ref ref="errorAppender"/>-->
 	<!--</logger>-->
-	<logger name="com.lijian.dispro" level="${log.level}" additivity="false">
-		<appender-ref ref="debugAppender"/>
-		<appender-ref ref="infoAppender"/>
-		<appender-ref ref="errorAppender"/>
-	</logger>
+
 
 	<!--<root level="INFO">-->
 		<!--<appender-ref ref="consoleAppender"/>-->
 	<!--</root>-->
 	<logger name="org.springframework.transaction" level="ERROR"/>
 	<logger name="org.springframework.jms" level="DEBUG"/>
-	<logger name="org.springframework.jdbc" level="ERROR"/>
+	<logger name="org.springframework.jdbc" level="debug"/>
 	<logger name="org.springframework.orm.jpa" level="ERROR"/>
 	<logger name="javax.transaction" level="ERROR"/>
 	<logger name="javax.jms" level="ERROR"/>
@@ -109,14 +105,13 @@
 <!--	-->
 <!--	</logger>-->
 
-
 	<appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
 
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
 			<pattern>%message %n</pattern>
 			<charset>utf8</charset>
 		</encoder>
-		<topic>rmcloud-gateway-audit-log</topic>
+		<topic>logback</topic>
 		<keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy"/>
 		<deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
 		　　　　 <!--注意此处应该是spring boot中的kafka配置属性-->
@@ -130,10 +125,11 @@
 		　　　　<producerConfig>properties.max.request.size==2097152</producerConfig>
 	</appender>
 	<root level="INFO">
-		<appender-ref ref="kafkaAppender"/>
 		<appender-ref ref="consoleAppender"/>
 	</root>
+	<!--<property name="kafkaServers" value="106.13.145.160:9092"/>-->
 	<property name="kafkaServers" value="127.0.0.1:9092"/>
+
 	<appender name="kafkaRmcloudAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
 		<filter class="com.lijian.dispro.quartz.kafka.LogKafkaFilter"/>
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -141,14 +137,18 @@
 			<charset>utf8</charset>
 		</encoder>
 		<topic>rmcloud-gateway-audit-log</topic>
-		<keyingStrategy class="com.github.danielwegener.logback.kafka.keying.NoKeyKeyingStrategy"/>
+		<keyingStrategy class="com.github.danielwegener.logback.kafka.keying.HostNameKeyingStrategy"/>
 		<deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy"/>
 		<producerConfig>bootstrap.servers=${kafkaServers}</producerConfig>
 	</appender>
-	<logger name="com.lijian.dispro">
+	<appender name="myKafkaAppender" class="com.lijian.dispro.quartz.logback.MyKafkaAppender"/>
 
-		<appender-ref ref="kafkaRmcloudAppender"/>
-
-
+	<logger name="com.lijian.dispro" level="${log.level}" additivity="false">
+		<!--<appender-ref ref="debugAppender"/>-->
+		<!--<appender-ref ref="infoAppender"/>-->
+		<!--<appender-ref ref="errorAppender"/>-->
+		<!--<appender-ref  ref="kafkaAppender"/>-->
+		<appender-ref ref="consoleAppender"/>
+		<!--<appender-ref ref="myKafkaAppender"/>-->
 	</logger>
 </configuration>

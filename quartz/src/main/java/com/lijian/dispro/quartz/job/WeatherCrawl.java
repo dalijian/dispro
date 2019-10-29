@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @DisallowConcurrentExecution
 @PersistJobDataAfterExecution
 @Component
-public class WeatherCrawl extends BaseJob implements Job {
+public class WeatherCrawl extends BaseJob {
     final String url = "http://www.weather.com.cn/data/sk/";
     Logger log = LoggerFactory.getLogger(WeatherCrawl.class);
 
@@ -73,6 +73,12 @@ public class WeatherCrawl extends BaseJob implements Job {
         });
         saveToDatabase(context, modelList);
     }
+
+    @Override
+    public Map<String, Object> getSubData() {
+        return null;
+    }
+
     private void saveToDatabase(JobExecutionContext context, List<Map<String, String>> modelList) {
         if (modelList.isEmpty()) {
             return;

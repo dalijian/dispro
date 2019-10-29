@@ -1,6 +1,7 @@
 package com.lijian.dispro.quartz;
 
 import org.quartz.spi.JobFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.PropertiesFactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -90,6 +91,16 @@ public class SchedulerConfig {
 
 
 
+
+
+
+
+
+
+
+
+
+
     @Bean
     public Properties quartzProperties() throws IOException {
         PropertiesFactoryBean propertiesFactoryBean = new PropertiesFactoryBean();
@@ -97,8 +108,8 @@ public class SchedulerConfig {
         propertiesFactoryBean.setLocation(resource);
 
         propertiesFactoryBean.afterPropertiesSet();
-
-        return propertiesFactoryBean.getObject();
+        Properties properties = propertiesFactoryBean.getObject();
+        return properties;
     }
 
 }

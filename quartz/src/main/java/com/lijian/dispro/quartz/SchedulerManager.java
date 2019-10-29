@@ -17,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -67,6 +69,7 @@ public class SchedulerManager {
             CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
                     .withSchedule(scheduleBuilder)
                     .build();
+//            更新 trigger 触发器
             scheduler.rescheduleJob(new TriggerKey(triggerName, triggerGroup),cronTrigger);
         }
 
@@ -92,10 +95,12 @@ public class SchedulerManager {
      * @param jobGroup
      * @throws SchedulerException
      */
+    @Transactional(rollbackFor = Exception.class)
     public void pauseJob(String jobName, String jobGroup) throws SchedulerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         JobKey jobKey = new JobKey(jobName, jobGroup);
         scheduler.pauseJob(jobKey);
+        System.out.println(1/0);
     }
 
     /**
@@ -195,7 +200,10 @@ public class SchedulerManager {
             keyMap.put("triggerName", trigger.get(0).getKey().getName());
             keyMap.put("triggerGroup", trigger.get(0).getKey().getGroup());
             String createTime = scheduler.getJobDetail(x).getJobDataMap().getString("createTime");
-            keyMap.put("createTime", createTime);
+            if (!StringUtils.isEmpty(createTime)) {
+                keyMap.put("createTime", createTime);
+            }
+
         } catch (SchedulerException e) {
             e.printStackTrace();
         }

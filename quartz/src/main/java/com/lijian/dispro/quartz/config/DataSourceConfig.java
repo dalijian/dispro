@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -40,7 +42,12 @@ public class DataSourceConfig {
 		return new JdbcTemplate(dataSource);
 	}
 
+	@Bean(value = "transTemplate")
+	public TransactionTemplate getTemplateTransaction(@Qualifier("disproDataSource") DataSource dataSource){
 
+		TransactionTemplate transTemplate = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+		return  transTemplate;
+	}
 
 
 private DataSource setConnection(DruidDataSource dataSource) {
